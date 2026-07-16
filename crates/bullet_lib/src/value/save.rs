@@ -11,7 +11,7 @@ use acyclib::{
     graph::{
         GraphNodeId, GraphNodeIdTy,
         like::GraphLike,
-        save::{GraphWeights, QuantTarget},
+        save::{GraphWeights},
     },
     trainer::{Trainer, optimiser::OptimiserState},
 };
@@ -69,8 +69,7 @@ where
 
     for fmt in &trainer.state.saved_format {
         if let Some(id) = &fmt.get_id() {
-            let idx =
-                GraphNodeId::new(trainer.optimiser.graph.primary().weight_idx(id).unwrap(), GraphNodeIdTy::Values);
+            let idx = GraphNodeId::new(trainer.optimiser.graph.primary().weight_idx(id).unwrap(), GraphNodeIdTy::Values);
             let weights = trainer.optimiser.graph.primary().get(idx).unwrap();
             let weights = weights.dense();
 
@@ -78,8 +77,9 @@ where
             let written = weights.write_to_slice(&mut weight_buf).unwrap();
             assert_eq!(written, weights.size());
 
-            let quantised = QuantTarget::Float.quantise(false, &weight_buf)?;
-            buf.extend_from_slice(&quantised);
+            for &w in &weight_buf {
+                buf.extend_from_slice(&w.to_le_bytes());
+            }
         }
     }
 

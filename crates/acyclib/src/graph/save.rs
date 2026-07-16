@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    io::{self, Write},
+    io::{self},
     rc::Rc,
 };
 
@@ -60,10 +60,11 @@ type Transform = Rc<dyn Fn(&GraphWeights, Vec<f32>) -> Vec<f32>>;
 #[derive(Clone)]
 pub struct SavedFormat {
     custom: Option<Vec<u8>>,
-    quant: QuantTarget,
     transforms: Vec<Transform>,
-    round: bool,
     id: Option<String>,
+
+    // Atomic function: takes exactly ONE f32, returns raw bytes for ONE element
+    pub element_serialiser: Rc<dyn Fn(f32) -> Vec<u8> + 'static>,
 }
 
 impl SavedFormat {
@@ -83,24 +84,66 @@ impl SavedFormat {
         Self { id: Some(id.clone()), ..Self::empty() }.transform(move |store, _| store.get(&id).values)
     }
 
-    /// Create an empty `SavedFormat`, where the initial values are empty.
-    /// Appropriate for constructing save formats where multiple weights are interleaved.
+    /// Create an empty `SavedFormat`
     pub fn empty() -> Self {
-        SavedFormat { custom: None, id: None, quant: QuantTarget::Float, transforms: Vec::new(), round: false }
+        SavedFormat {
+            custom: None,
+            id: None,
+            transforms: Vec::new(),
+            // Default strategy for f32: raw bitwise pass-through
+            element_serialiser: Rc::new(|w| w.to_ne_bytes().to_vec()),
+        }
     }
 
-    /// If quantising, round rather than truncate.
-    pub fn round(mut self) -> Self {
-        assert!(self.custom.is_none());
-        self.round = true;
+    #[deprecated(note = "Use `.transform(|store, mut values| { ... })` instead!")]
+    pub fn round(self) -> Self {
+        // does nothing
         self
     }
 
-    /// Write weights quantised by factor `multiplier` as type `T`.
-    pub fn quantise<T: Quant>(mut self, multiplier: T::Multiplier) -> Self {
+    pub fn rescale<T: 'static>(mut self, multiplier: impl Into<f64>) -> Self {
         assert!(self.custom.is_none());
-        self.quant = T::to_target(multiplier);
+
+        // precise scale into f64 space
+        let scale_f64: f64 = multiplier.into();
+        let is_f32 = std::any::TypeId::of::<T>() == std::any::TypeId::of::<f32>();
+
+        self = self.transform(move |_, mut weights| {
+            for i in 0..weights.len() {
+                let scaled = weights[i] as f64 * scale_f64;
+                weights[i] = if is_f32 { scaled as f32 } else { scaled.round() as f32 };
+            }
+            weights
+        });
+
         self
+    }
+
+    pub fn quantise_to_type<T: 'static>(mut self) -> Self {
+        assert!(self.custom.is_none());
+
+        let is_f32 = std::any::TypeId::of::<T>() == std::any::TypeId::of::<f32>();
+
+        if is_f32 {
+            // float serializer strategy: raw 4 bytes copy
+            self.element_serialiser = Rc::new(move |w| {
+                return w.to_ne_bytes().to_vec();
+            });
+        } else {
+            // universal integer serializer strategy
+            let type_bytes = std::mem::size_of::<T>();
+            self.element_serialiser = Rc::new(move |w| {
+                let int_val = w as i64;
+                let raw_bytes = int_val.to_ne_bytes();
+                return raw_bytes[0..type_bytes].to_vec();
+            });
+        }
+
+        self
+    }
+
+    pub fn quantise<T: 'static>(self, multiplier: impl Into<f64>) -> Self {
+        self.rescale::<T>(multiplier).quantise_to_type::<T>()
     }
 
     /// Transpose current values using the shape of the weights from weight `id`.
@@ -126,18 +169,34 @@ impl SavedFormat {
     }
 
     pub fn write_to_byte_buffer(&self, graph: &GraphWeights) -> io::Result<Vec<u8>> {
-        match &self.custom {
-            Some(bytes) => Ok(bytes.clone()),
-            None => {
-                let mut weights = Vec::new();
-
-                for transform in &self.transforms {
-                    weights = transform(graph, weights);
-                }
-
-                self.quant.quantise(self.round, &weights)
-            }
+        if let Some(bytes) = &self.custom {
+            return Ok(bytes.clone());
         }
+
+        let mut weights = Vec::new();
+
+        for transform in &self.transforms {
+            weights = transform(graph, weights);
+        }
+
+        if weights.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let serialize = self.element_serialiser.as_ref();
+
+        // process the VERY FIRST element to determine exact layout size
+        let first_element = serialize(weights[0]);
+
+        let mut buf = Vec::new();
+        buf.reserve(weights.len() * first_element.len());
+        buf.extend_from_slice(&first_element);
+
+        for i in 1..weights.len() {
+            buf.extend_from_slice(&serialize(weights[i]));
+        }
+
+        return Ok(buf);
     }
 
     pub(crate) fn transpose_impl(shape: Shape, weights: &[f32]) -> Vec<f32> {
@@ -154,95 +213,5 @@ impl SavedFormat {
         }
 
         new_buf
-    }
-}
-
-#[derive(Clone, Copy)]
-pub enum QuantTarget {
-    Float,
-    /// This takes an `i16` because it is common to want to use a quantisation
-    /// value of, say, 128 with weights clipped to [-0.99, 0.99]
-    I8(i16),
-    I16(i16),
-    I32(i32),
-}
-
-fn round_or_trunc(x: f64, round: bool) -> f64 {
-    if round { x.round() } else { x.trunc() }
-}
-
-impl QuantTarget {
-    pub fn quantise(self, round: bool, buf: &[f32]) -> io::Result<Vec<u8>> {
-        let mut quantised = Vec::<u8>::new();
-
-        for &float in buf {
-            let to_write = match self {
-                Self::Float => float.to_le_bytes().to_vec(),
-                Self::I8(q) => {
-                    let qf = round_or_trunc(f64::from(q) * f64::from(float), round);
-                    let x = qf as i8;
-
-                    if qf != f64::from(x) {
-                        return Err(io::Error::new(io::ErrorKind::InvalidData, "Failed quantisation from f32 to i8!"));
-                    }
-
-                    x.to_le_bytes().to_vec()
-                }
-                Self::I16(q) => {
-                    let qf = round_or_trunc(f64::from(q) * f64::from(float), round);
-                    let x = qf as i16;
-
-                    if qf != f64::from(x) {
-                        return Err(io::Error::new(io::ErrorKind::InvalidData, "Failed quantisation from f32 to i16!"));
-                    }
-
-                    x.to_le_bytes().to_vec()
-                }
-                Self::I32(q) => {
-                    let qf = round_or_trunc(f64::from(q) * f64::from(float), round);
-                    let x = qf as i32;
-
-                    if qf != f64::from(x) {
-                        return Err(io::Error::new(io::ErrorKind::InvalidData, "Failed quantisation from f32 to i32!"));
-                    }
-
-                    x.to_le_bytes().to_vec()
-                }
-            };
-
-            quantised.write_all(&to_write)?;
-        }
-
-        Ok(quantised)
-    }
-}
-
-pub trait Quant {
-    type Multiplier;
-
-    fn to_target(q: Self::Multiplier) -> QuantTarget;
-}
-
-impl Quant for i8 {
-    type Multiplier = i16;
-
-    fn to_target(q: Self::Multiplier) -> QuantTarget {
-        QuantTarget::I8(q)
-    }
-}
-
-impl Quant for i16 {
-    type Multiplier = i16;
-
-    fn to_target(q: Self::Multiplier) -> QuantTarget {
-        QuantTarget::I16(q)
-    }
-}
-
-impl Quant for i32 {
-    type Multiplier = i32;
-
-    fn to_target(q: Self::Multiplier) -> QuantTarget {
-        QuantTarget::I32(q)
     }
 }
