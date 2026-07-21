@@ -9,6 +9,7 @@ unsafe extern "C" {
     pub fn activateSqrReLU(size: usize, inp: *const f32, out: *mut f32);
     pub fn activateSigmoid(size: usize, inp: *const f32, out: *mut f32);
     pub fn activateHardTanh(size: usize, inp: *const f32, out: *mut f32);
+    pub fn activatePolyTanh(size: usize, inp: *const f32, out: *mut f32);
 
     pub fn backpropReLU(size: usize, input: *const f32, output_grad: *const f32, input_grad: *mut f32);
     pub fn backpropCReLU(size: usize, input: *const f32, output_grad: *const f32, input_grad: *mut f32);
@@ -16,6 +17,7 @@ unsafe extern "C" {
     pub fn backpropSqrReLU(size: usize, input: *const f32, output_grad: *const f32, input_grad: *mut f32);
     pub fn backpropSigmoid(size: usize, output: *const f32, output_grad: *const f32, input_grad: *mut f32);
     pub fn backpropHardTanh(size: usize, input: *const f32, output_grad: *const f32, input_grad: *mut f32);
+    pub fn backpropPolyTanh(size: usize, input: *const f32, output_grad: *const f32, input_grad: *mut f32);
 
     pub fn powerError(bufferSize: usize, inputs: *const f32, results: *const f32, output: *mut f32, power: f32);
     pub fn backpropPowerError(bufferSize: usize, inputs: *const f32, results: *const f32, output_grad: *const f32, input_grads: *mut f32, power: f32);

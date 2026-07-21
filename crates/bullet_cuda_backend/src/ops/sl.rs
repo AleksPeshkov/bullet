@@ -184,6 +184,7 @@ impl GraphIROperationCompilable<CudaMarker> for SparseAffineUnaryMatmul {
                     DiffableFromOutput::SqrReLU => "max(x, 0.0F) * max(x, 0.0F)",
                     DiffableFromOutput::Sigmoid => "1.0F / (1.0F + expf(-x))",
                     DiffableFromOutput::HardTanh => "x <= -1.0F ? -1.0F : x >= 1.0F ? 1.0F : x",
+                    DiffableFromOutput::PolyTanh => "x <= -1.0F ? -1.0F : x >= 1.0F ? 1.0F : x * (2.0F - (x >= 0.0F ? x : -x))",
                 },
             )
             .replace("DECL_MAXY", &MAXIMUM_BLOCKS_Y.to_string())
@@ -271,6 +272,7 @@ impl GraphIROperationCompilable<CudaMarker> for SparseAffineUnaryMatmul {
                     DiffableFromOutput::SqrReLU => "x > 0.0F ? 2.0F * sqrtf(x) : 0.0F",
                     DiffableFromOutput::Sigmoid => "x * (1.0F - x)",
                     DiffableFromOutput::HardTanh => "x <= -1.0F ? 0.0F : x >= 1.0 ? 0.0 : 1.0",
+                    DiffableFromOutput::PolyTanh => "x <= -1.0F ? 0.0F : x >= 1.0F ? 0.0F : (x >= 0.0F ? x : -x) - 1.0F + 2.0F * sqrtf(1.0F - (x >= 0.0F ? x : -x))",
                 },
             )
             .replace("DECL_MAXY", &MAXIMUM_BLOCKS_Y.to_string())

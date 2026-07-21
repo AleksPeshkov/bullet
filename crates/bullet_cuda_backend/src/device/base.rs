@@ -55,6 +55,7 @@ impl BaseOperations for CudaBuffer<f32> {
             DiffableFromOutput::SqrReLU => "ForwardSqrReluKernel",
             DiffableFromOutput::Sigmoid => "ForwardSigmoidKernel",
             DiffableFromOutput::HardTanh => "ForwardHardTanhKernel",
+            DiffableFromOutput::PolyTanh => "ForwardPolyTanhKernel",
         };
 
         let func = self.device.module().load_function(func_name).map_err(CudaError::Driver)?;
@@ -88,6 +89,7 @@ impl BaseOperations for CudaBuffer<f32> {
             DiffableFromOutput::SqrReLU => "BackwardSqrReluKernel",
             DiffableFromOutput::Sigmoid => "BackwardSigmoidKernel",
             DiffableFromOutput::HardTanh => "BackwardHardTanhKernel",
+            DiffableFromOutput::PolyTanh => "BackwardPolyTanhKernel",
         };
 
         let func = self.device.module().load_function(func_name).map_err(CudaError::Driver)?;

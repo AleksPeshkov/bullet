@@ -103,6 +103,9 @@ extern "C" void sparse_affine_backward(
         case 6:
             sparse_affine_backward_internal<primeInvHardTanh>(nnz, m, k, Bb, X, V, Y, Yg, Ag, Bg);
             break;
+        case 7:
+            sparse_affine_backward_internal<primeInvPolyTanh>(nnz, m, k, Bb, X, V, Y, Yg, Ag, Bg);
+            break;
         default:
             std::abort();
     }
