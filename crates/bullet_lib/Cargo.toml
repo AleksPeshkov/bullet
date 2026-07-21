@@ -27,6 +27,14 @@ sfbinpack = "0.6.0"
 viriformat = { workspace = true }
 
 [[example]]
+name = "petrel"
+path = "../../../petrel/net/petrel.rs"
+
+[[example]]
+name = "quantise"
+path = "../../../petrel/net/quantise.rs"
+
+[[example]]
 name = "simple"
 path = "../../examples/simple.rs"
 
