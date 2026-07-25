@@ -15,6 +15,7 @@ __device__ float SqrReLU(float in) { return in < 0.0F ? 0.0F : (in * in); }
 __device__ float sigmoid(float in) { return 1.0F / (1.0F + expf(-in)); }
 __device__ float HardTanh(float x) { return x <= -1.0F ? -1.0F : x >= 1.0F ? 1.0F : x; }
 __device__ float PolyTanh(float x) { return x <= -1.0F ? -1.0F : x >= 1.0F ? 1.0F : x * (2.0F - (x >= 0.0F ? x : -x)); }
+__device__ float SmoothStep(float x) { return x <= 0.0F ? 0.0F : x >= 1.0F ? 1.0F : x * x * (3.0F - 2.0F * x); }
 
 __device__ float primeIdentity([[maybe_unused]] float in) { return 1.0F; }
 __device__ float primeReLU(float in) { return in > 0.0F ? 1.0F : 0.0F; }
@@ -24,6 +25,7 @@ __device__ float primeSqrReLU(float in) { return in > 0.0F ? 2.0F * in : 0.0F; }
 __device__ float primeSigmoid(float in) { const float act = sigmoid(in); return act * (1.0F - act); }
 __device__ float primeHardTanh(float x) { return x <= -1.0F ? 0.0F : x >= 1.0F ? 0.0F : 1.0F; }
 __device__ float primePolyTanh(float x) { return x <= -1.0F ? 0.0F : x >= 1.0F ? 0.0F : 2.0F * (1.0F - (x >= 0.0F ? x : -x)); }
+__device__ float primeSmoothStep(float x) { return x <= 0.0F ? 0.0F : x >= 1.0F ? 0.0F : 6.0F * x * (1.0F - x); }
 
 __device__ float primeInvIdentity([[maybe_unused]] float in) { return 1.0F; }
 __device__ float primeInvReLU(float in) { return in > 0.0F ? 1.0F : 0.0F; }
@@ -33,5 +35,6 @@ __device__ float primeInvSqrReLU(float in) { return in > 0.0F ? 2.0F * sqrtf(in)
 __device__ float primeInvSigmoid(float in) { return in * (1.0F - in); }
 __device__ float primeInvHardTanh(float x) { return x <= -1.0F ? 0.0F : x >= 1.0F ? 0.0F : 1.0F; }
 __device__ float primeInvPolyTanh(float x) { return x <= -1.0F ? 0.0F : x >= 1.0F ? 0.0F : 2.0F * sqrtf(1.0F - (x > 0.0F ? x : -x)); }
+__device__ float primeInvSmoothStep(float x) { return x <= 0.0F ? 0.0F : x >= 1.5F ? 0.5F : x <= 0.5F ? (3.0F - sqrtf(9.0F - 6.0F * x)) * 0.16666667F : (3.0F + sqrtf(9.0F - 6.0F * x)) * 0.16666667F; }
 
 #endif

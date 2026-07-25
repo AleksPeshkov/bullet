@@ -47,3 +47,4 @@ define_activation!(sqrrelu, sqrrelu_backward, activateSqrReLU, backpropSqrReLU);
 define_activation!(sigmoid, sigmoid_backward, activateSigmoid, backpropSigmoid);
 define_activation!(hardtanh, hardtanh_backward, activateHardTanh, backpropHardTanh);
 define_activation!(polytanh, polytanh_backward, activatePolyTanh, backpropPolyTanh);
+define_activation!(smoothstep, smoothstep_backward, activateSmoothStep, backpropSmoothStep);

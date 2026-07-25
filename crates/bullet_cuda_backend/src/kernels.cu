@@ -15,6 +15,7 @@ __device__ float SqrReLU(float in) { return in < 0.0F ? 0.0F : (in * in); }
 __device__ float sigmoid(float in) { return 1.0F / (1.0F + expf(-in)); }
 __device__ float HardTanh(float x) { return x <= -1.0F ? -1.0F : x >= 1.0F ? 1.0F : x; }
 __device__ float PolyTanh(float x) { return x <= -1.0F ? -1.0F : x >= 1.0F ? 1.0F : x * (2.0F - (x >= 0.0F ? x : -x)); }
+__device__ float SmoothStep(float x) { return x <= 0.0F ? 0.0F : x >= 1.0F ? 1.0F : x * x * (3.0F - 2.0F * x); }
 
 __device__ float primeIdentity([[maybe_unused]] float in) { return 1.0F; }
 __device__ float primeReLU(float in) { return in > 0.0F ? 1.0F : 0.0F; }
@@ -24,6 +25,7 @@ __device__ float primeSqrReLU(float in) { return in > 0.0F ? 2.0F * in : 0.0F; }
 __device__ float primeSigmoid(float in) { const float act = sigmoid(in); return act * (1.0F - act); }
 __device__ float primeHardTanh(float x) { return x <= -1.0F ? 0.0F : x >= 1.0F ? 0.0F : 1.0F; }
 __device__ float primePolyTanh(float x) { return x <= -1.0F ? 0.0F : x >= 1.0F ? 0.0F : 2.0F * (1.0F - (x >= 0.0F ? x : -x)); }
+__device__ float primeSmoothStep(float x) { return x <= 0.0F ? 0.0F : x >= 1.0F ? 0.0F : 6.0F * x * (1.0F - x); }
 
 #define ACTIVATE(name, op)\
 BULLET_KERNEL name(const int size, const float* in, float* out)\
@@ -92,6 +94,7 @@ ACTIVATE(ForwardSqrReluKernel, SqrReLU)
 ACTIVATE(ForwardSigmoidKernel, sigmoid)
 ACTIVATE(ForwardHardTanhKernel, HardTanh)
 ACTIVATE(ForwardPolyTanhKernel, PolyTanh)
+ACTIVATE(ForwardSmoothStepKernel, SmoothStep)
 
 BACKPROP(BackwardReluKernel, primeReLU)
 BACKPROP(BackwardCreluKernel, primeCReLU)
@@ -100,6 +103,7 @@ BACKPROP(BackwardSqrReluKernel, primeSqrReLU)
 BACKPROP(BackwardSigmoidKernel, primeSigmoid)
 BACKPROP(BackwardHardTanhKernel, primeHardTanh)
 BACKPROP(BackwardPolyTanhKernel, primePolyTanh)
+BACKPROP(BackwardSmoothStepKernel, primeSmoothStep)
 
 BULLET_KERNEL ScaleAssignKernel(const int size, float* params, const float alpha) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;

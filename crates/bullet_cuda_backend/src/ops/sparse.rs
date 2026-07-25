@@ -47,6 +47,7 @@ impl SparseAffineImpl for CudaDevice {
                     DiffableFromOutput::Sigmoid => "x * (1.0F - x)",
                     DiffableFromOutput::HardTanh => "x <= -1.0F ? 0.0F : x >= 1.0F ? 0.0F : 1.0F",
                     DiffableFromOutput::PolyTanh => "x <= -1.0F ? 0.0F : x >= 1.0F ? 0.0F : 2.0F * sqrtf(1.0F - (x > 0.0F ? x : -x))",
+                    DiffableFromOutput::SmoothStep => "x <= 0.0F ? 0.0F : x >= 1.5F ? 0.5F : x <= 0.5F ? (3.0F - sqrtf(9.0F - 6.0F * x)) * 0.16666667F : (3.0F + sqrtf(9.0F - 6.0F * x)) * 0.16666667F",
                 },
             )
             .replace("DECL_MAXY", &MAXIMUM_BLOCKS_Y.to_string())

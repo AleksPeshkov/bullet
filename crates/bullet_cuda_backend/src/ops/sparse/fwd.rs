@@ -82,6 +82,7 @@ fn act_str(act: DiffableFromOutput) -> &'static str {
         DiffableFromOutput::Sigmoid => "1.0F / (1.0F + expf(-x))",
         DiffableFromOutput::HardTanh => "x <= -1.0F ? -1.0F : x >= 1.0F ? 1.0F : x",
         DiffableFromOutput::PolyTanh => "x <= -1.0F ? -1.0F : x >= 1.0F ? 1.0F : x * (2.0F - (x >= 0.0F ? x : -x))",
+        DiffableFromOutput::SmoothStep => "x <= 0.0F ? 0.0F : x >= 1.0F ? 1.0F : x * x * (3.0F - 2.0F * x)",
     }
 }
 

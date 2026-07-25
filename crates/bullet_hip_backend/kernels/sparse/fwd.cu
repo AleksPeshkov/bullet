@@ -177,6 +177,9 @@ extern "C" void sparse_affine(
         case 7:
             sparse_affine_internal<PolyTanh>(nnz, m, k, Bb, A, X, V, B, Y);
             break;
+        case 8:
+            sparse_affine_internal<SmoothStep>(nnz, m, k, Bb, A, X, V, B, Y);
+            break;
         default:
             std::abort();
     }

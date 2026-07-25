@@ -38,6 +38,7 @@ impl BaseOperations for CpuBuffer<f32> {
             DiffableFromOutput::Sigmoid => apply(size, a, self, |x| 1.0 / (1.0 + (-x).exp())),
             DiffableFromOutput::HardTanh => apply(size, a, self, |x| if x <= -1.0 { -1.0 } else if x >= 1.0 { 1.0 } else { x }),
             DiffableFromOutput::PolyTanh => apply(size, a, self, |x| if x <= -1.0 { -1.0 } else if x >= 1.0 { 1.0 } else { x * (2.0 - if x >= 0.0 { x } else { -x }) }),
+            DiffableFromOutput::SmoothStep => apply(size, a, self, |x| if x <= 0.0 { 0.0 } else if x >= 1.0 { 1.0 } else { x * x * (3.0 - 2.0 * x) }),
         }
 
         Ok(())
@@ -73,6 +74,7 @@ impl BaseOperations for CpuBuffer<f32> {
             DiffableFromOutput::Sigmoid => apply(size, a, grd, self, |x| { let sig = 1.0 / (1.0 + (-x).exp()); sig * (1.0 - sig) }),
             DiffableFromOutput::HardTanh => apply(size, a, grd, self, |x| if x <= -1.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 1.0 }),
             DiffableFromOutput::PolyTanh => apply(size, a, grd, self, |x| if x <= -1.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 2.0 * (1.0 - if x >= 0.0 { x } else { -x }) }),
+            DiffableFromOutput::SmoothStep => apply(size, a, grd, self, |x| if x <= 0.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 6.0 * x * (1.0 - x) }),
         }
 
         Ok(())
