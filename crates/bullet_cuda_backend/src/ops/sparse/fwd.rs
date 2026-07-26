@@ -80,6 +80,7 @@ fn act_str(act: DiffableFromOutput) -> &'static str {
         DiffableFromOutput::SCReLU => "x < 0.0F ? 0.0F : (x > 1.0F ? 1.0F : (x * x))",
         DiffableFromOutput::SqrReLU => "x < 0.0F ? 0.0F : (x * x)",
         DiffableFromOutput::Sigmoid => "1.0F / (1.0F + expf(-x))",
+        DiffableFromOutput::HardTanh => "x <= -1.0F ? -1.0F : x >= 1.0F ? 1.0F : x",
     }
 }
 

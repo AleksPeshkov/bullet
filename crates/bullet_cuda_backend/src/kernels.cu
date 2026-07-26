@@ -13,16 +13,15 @@ __device__ float CReLU(float in) { return in < 0.0F ? 0.0F : (in > 1.0F ? 1.0F :
 __device__ float SCReLU(float in) { return in < 0.0F ? 0.0F : (in > 1.0F ? 1.0F : (in * in)); }
 __device__ float SqrReLU(float in) { return in < 0.0F ? 0.0F : (in * in); }
 __device__ float sigmoid(float in) { return 1.0F / (1.0F + expf(-in)); }
+__device__ float HardTanh(float x) { return x <= -1.0F ? -1.0F : x >= 1.0F ? 1.0F : x; }
 
 __device__ float primeIdentity([[maybe_unused]] float in) { return 1.0F; }
 __device__ float primeReLU(float in) { return in > 0.0F ? 1.0F : 0.0F; }
 __device__ float primeCReLU(float in) { return in > 0.0F && in < 1.0F ? 1.0F : 0.0F; }
 __device__ float primeSCReLU(float in) { return in > 0.0F && in < 1.0F ? 2.0F * in : 0.0F; }
 __device__ float primeSqrReLU(float in) { return in > 0.0F ? 2.0F * in : 0.0F; }
-__device__ float primeSigmoid(float in) {
-    const float act = sigmoid(in);
-    return act * (1.0F - act);
-}
+__device__ float primeSigmoid(float in) { const float act = sigmoid(in); return act * (1.0F - act); }
+__device__ float primeHardTanh(float x) { return x <= -1.0F ? 0.0F : x >= 1.0F ? 0.0F : 1.0F; }
 
 #define ACTIVATE(name, op)\
 BULLET_KERNEL name(const int size, const float* in, float* out)\
@@ -89,12 +88,14 @@ ACTIVATE(ForwardCreluKernel, CReLU)
 ACTIVATE(ForwardScreluKernel, SCReLU)
 ACTIVATE(ForwardSqrReluKernel, SqrReLU)
 ACTIVATE(ForwardSigmoidKernel, sigmoid)
+ACTIVATE(ForwardHardTanhKernel, HardTanh)
 
 BACKPROP(BackwardReluKernel, primeReLU)
 BACKPROP(BackwardCreluKernel, primeCReLU)
 BACKPROP(BackwardScreluKernel, primeSCReLU)
 BACKPROP(BackwardSqrReluKernel, primeSqrReLU)
 BACKPROP(BackwardSigmoidKernel, primeSigmoid)
+BACKPROP(BackwardHardTanhKernel, primeHardTanh)
 
 BULLET_KERNEL ScaleAssignKernel(const int size, float* params, const float alpha) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -102,7 +103,7 @@ BULLET_KERNEL ScaleAssignKernel(const int size, float* params, const float alpha
     if (tid < size / 4)
     {
         float4 a = ((float4 *)params)[tid];
-        
+
         a.x *= alpha;
         a.y *= alpha;
         a.z *= alpha;
@@ -127,7 +128,7 @@ BULLET_KERNEL ScaleAddAssignKernel(const int size, const float alpha, float* ap,
     {
         float4 a = ((float4 *)ap)[tid];
         const float4 b = ((const float4 *)bp)[tid];
-        
+
         a.x = alpha * a.x + beta * b.x;
         a.y = alpha * a.y + beta * b.y;
         a.z = alpha * a.z + beta * b.z;
@@ -152,7 +153,7 @@ BULLET_KERNEL ScaleKernel(const int size, const float alpha, const float* inp, f
     {
         float4 a = ((float4 *)out)[tid];
         const float4 b = ((const float4 *)inp)[tid];
-        
+
         a.x = alpha * b.x;
         a.y = alpha * b.y;
         a.z = alpha * b.z;
@@ -178,7 +179,7 @@ BULLET_KERNEL LinearCombKernel(const int size, const float alpha, const float* a
         const float4 a = ((const float4 *)ap)[tid];
         const float4 b = ((const float4 *)bp)[tid];
         float4 c = ((float4 *)cp)[tid];
-        
+
         c.x = alpha * a.x + beta * b.x;
         c.y = alpha * a.y + beta * b.y;
         c.z = alpha * a.z + beta * b.z;
@@ -274,7 +275,7 @@ BULLET_KERNEL ClipKernel(const int size, float* params, const float min_weight, 
     if (tid < size / 4)
     {
         float4 a = ((float4 *)params)[tid];
-        
+
         a.x = min(max(a.x, min_weight), max_weight);
         a.y = min(max(a.y, min_weight), max_weight);
         a.z = min(max(a.z, min_weight), max_weight);
@@ -329,7 +330,7 @@ BULLET_KERNEL PairwiseMulBackwardKernel(
     const int idxInOutput = tid % output_size;
 
     const float gradIn = output_grad[stride * idxInBatch + idxInOutput];
-    
+
     const int inputOffset = 2 * output_size * idxInBatch + idxInOutput;
     const float* thisInput = input + inputOffset;
     float* thisInputGrad = input_grad + inputOffset;
@@ -397,7 +398,7 @@ BULLET_KERNEL_IMPL scalar_kernel_forward(const int size, const float alpha, cons
     {
         float4 a = ((float4 *)out)[tid];
         const float4 b = ((const float4 *)inp)[tid];
-        
+
         a.x = op(b.x, alpha);
         a.y = op(b.y, alpha);
         a.z = op(b.z, alpha);

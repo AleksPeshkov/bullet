@@ -8,11 +8,15 @@ unsafe extern "C" {
     pub fn activateSCReLU(size: usize, inp: *const f32, out: *mut f32);
     pub fn activateSqrReLU(size: usize, inp: *const f32, out: *mut f32);
     pub fn activateSigmoid(size: usize, inp: *const f32, out: *mut f32);
+    pub fn activateHardTanh(size: usize, inp: *const f32, out: *mut f32);
+
     pub fn backpropReLU(size: usize, input: *const f32, output_grad: *const f32, input_grad: *mut f32);
     pub fn backpropCReLU(size: usize, input: *const f32, output_grad: *const f32, input_grad: *mut f32);
     pub fn backpropSCReLU(size: usize, input: *const f32, output_grad: *const f32, input_grad: *mut f32);
     pub fn backpropSqrReLU(size: usize, input: *const f32, output_grad: *const f32, input_grad: *mut f32);
     pub fn backpropSigmoid(size: usize, output: *const f32, output_grad: *const f32, input_grad: *mut f32);
+    pub fn backpropHardTanh(size: usize, input: *const f32, output_grad: *const f32, input_grad: *mut f32);
+
     pub fn powerError(bufferSize: usize, inputs: *const f32, results: *const f32, output: *mut f32, power: f32);
     pub fn backpropPowerError(bufferSize: usize, inputs: *const f32, results: *const f32, output_grad: *const f32, input_grads: *mut f32, power: f32);
     pub fn Adam(size: usize, beta1: f32, beta2: f32, adj: f32, rate: f32, denom: bool, decay: f32, min: f32, max: f32, network: *mut f32, momentum: *mut f32, velocity: *mut f32, gradients: *const f32);

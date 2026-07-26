@@ -106,7 +106,7 @@ void sparse_affine_internal(
 
     if ((m % 4) == 0 && m >= 128)
     {
-        const int32_t m4_size = (m + 3) / 4; 
+        const int32_t m4_size = (m + 3) / 4;
         const int32_t threads = min(m4_size, max_threads);
         const int32_t chunks = (m4_size + threads - 1) / threads;
 
@@ -118,7 +118,7 @@ void sparse_affine_internal(
             nnz,
             m,
             k,
-            Bb, 
+            Bb,
             reinterpret_cast<const float4*>(A),
             X,
             V,
@@ -170,6 +170,9 @@ extern "C" void sparse_affine(
             break;
         case 5:
             sparse_affine_internal<sigmoid>(nnz, m, k, Bb, A, X, V, B, Y);
+            break;
+        case 6:
+            sparse_affine_internal<HardTanh>(nnz, m, k, Bb, A, X, V, B, Y);
             break;
         default:
             std::abort();

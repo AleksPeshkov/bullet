@@ -25,7 +25,7 @@ __global__ void sparse_affine_backward_kernel(
     const float tE = op(Y[offset + row]) * Yg[offset + row];
 
     if (Bg != nullptr && tE != 0.0F)
-    {   
+    {
         const int32_t offset2 = Bb ? m * loc : 0;
         atomicAdd(&Bg[offset2 + row], tE);
     }
@@ -99,6 +99,9 @@ extern "C" void sparse_affine_backward(
             break;
         case 5:
             sparse_affine_backward_internal<primeInvSigmoid>(nnz, m, k, Bb, X, V, Y, Yg, Ag, Bg);
+            break;
+        case 6:
+            sparse_affine_backward_internal<primeInvHardTanh>(nnz, m, k, Bb, X, V, Y, Yg, Ag, Bg);
             break;
         default:
             std::abort();

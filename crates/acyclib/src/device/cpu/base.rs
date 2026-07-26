@@ -36,6 +36,7 @@ impl BaseOperations for CpuBuffer<f32> {
             DiffableFromOutput::SCReLU => apply(size, a, self, |x| x.clamp(0.0, 1.0).powi(2)),
             DiffableFromOutput::SqrReLU => apply(size, a, self, |x| x.max(0.0).powi(2)),
             DiffableFromOutput::Sigmoid => apply(size, a, self, |x| 1.0 / (1.0 + (-x).exp())),
+            DiffableFromOutput::HardTanh => apply(size, a, self, |x| if x <= -1.0 { -1.0 } else if x >= 1.0 { 1.0 } else { x }),
         }
 
         Ok(())
@@ -68,10 +69,8 @@ impl BaseOperations for CpuBuffer<f32> {
             DiffableFromOutput::CReLU => apply(size, a, grd, self, |x| f32::from(x > 0.0 && x < 1.0)),
             DiffableFromOutput::SCReLU => apply(size, a, grd, self, |x| if x > 0.0 && x < 1.0 { 2.0 * x } else { 0.0 }),
             DiffableFromOutput::SqrReLU => apply(size, a, grd, self, |x| if x > 0.0 { 2.0 * x } else { 0.0 }),
-            DiffableFromOutput::Sigmoid => apply(size, a, grd, self, |x| {
-                let sig = 1.0 / (1.0 + (-x).exp());
-                sig * (1.0 - sig)
-            }),
+            DiffableFromOutput::Sigmoid => apply(size, a, grd, self, |x| { let sig = 1.0 / (1.0 + (-x).exp()); sig * (1.0 - sig) }),
+            DiffableFromOutput::HardTanh => apply(size, a, grd, self, |x| if x <= -1.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 1.0 }),
         }
 
         Ok(())

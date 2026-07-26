@@ -18,6 +18,7 @@ pub enum DiffableFromOutput {
     SCReLU = 3,
     SqrReLU = 4,
     Sigmoid = 5,
+    HardTanh = 6,
 }
 
 pub trait BaseOperations {

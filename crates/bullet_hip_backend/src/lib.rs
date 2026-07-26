@@ -85,6 +85,7 @@ impl BaseOperations for Buffer<f32> {
             DiffableFromOutput::SCReLU => dense::screlu(size, a, self),
             DiffableFromOutput::SqrReLU => dense::sqrrelu(size, a, self),
             DiffableFromOutput::Sigmoid => dense::sigmoid(size, a, self),
+            DiffableFromOutput::HardTanh => dense::hardtanh(size, a, self),
         }
     }
 
@@ -102,6 +103,7 @@ impl BaseOperations for Buffer<f32> {
             DiffableFromOutput::SCReLU => dense::screlu_backward(size, a, self, grd),
             DiffableFromOutput::SqrReLU => dense::sqrrelu_backward(size, a, self, grd),
             DiffableFromOutput::Sigmoid => dense::sigmoid_backward(size, a, self, grd),
+            DiffableFromOutput::HardTanh => dense::hardtanh_backward(size, a, self, grd),
         }
     }
 

@@ -45,6 +45,7 @@ impl SparseAffineImpl for CudaDevice {
                     DiffableFromOutput::SCReLU => "x > 0.0F && x < 1.0F ? 2.0F * sqrtf(x) : 0.0F",
                     DiffableFromOutput::SqrReLU => "x > 0.0F ? 2.0F * sqrtf(x) : 0.0F",
                     DiffableFromOutput::Sigmoid => "x * (1.0F - x)",
+                    DiffableFromOutput::HardTanh => "x <= -1.0F ? 0.0F : x >= 1.0F ? 0.0F : 1.0F",
                 },
             )
             .replace("DECL_MAXY", &MAXIMUM_BLOCKS_Y.to_string())
