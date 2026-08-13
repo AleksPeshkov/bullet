@@ -21,6 +21,7 @@ pub enum DiffableFromOutput {
     HardTanh = 6,
     PolyTanh = 7,
     SmoothStep = 8,
+    Welch = 9,
 }
 
 pub trait BaseOperations {

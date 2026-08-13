@@ -55,6 +55,7 @@ impl SparseAffineOps for CpuThread {
             DiffableFromOutput::HardTanh => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| if x <= -1.0 { -1.0 } else if x >= 1.0 { 1.0 } else { x }),
             DiffableFromOutput::PolyTanh => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| if x <= -1.0 { -1.0 } else if x >= 1.0 { 1.0 } else { x * (2.0 - if x >= 0.0 { x } else { -x }) }),
             DiffableFromOutput::SmoothStep => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| if x <= 0.0 { 0.0 } else if x >= 1.0 { 1.0 } else { x * x * (3.0 - 2.0 * x) }),
+            DiffableFromOutput::Welch => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| if x <= -1.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 1.0 - x * x }),
         }
 
         Ok(())
@@ -112,6 +113,7 @@ impl SparseAffineOps for CpuThread {
             DiffableFromOutput::HardTanh => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| if x <= -1.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 1.0 }),
             DiffableFromOutput::PolyTanh => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| if x <= -1.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 2.0 * (1.0 - if x >= 0.0 { x } else { -x }) }),
             DiffableFromOutput::SmoothStep => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| if x <= 0.0 { 0.0 } else if x >= 1.5 { 0.5 } else if x <= 0.5 { (3.0 - (9.0 - 6.0 * x).sqrt()) * 0.16666667 } else { (3.0 + (9.0 - 6.0 * x).sqrt()) * 0.16666667 }),
+            DiffableFromOutput::Welch => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| 2.0 - 2.0 * x.max(0.0).sqrt()),
         }
 
         Ok(())
