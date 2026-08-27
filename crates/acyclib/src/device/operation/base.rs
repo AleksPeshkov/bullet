@@ -23,6 +23,7 @@ pub enum DiffableFromOutput {
     SmoothStep = 8,
     Welch = 9,
     SignedSquare = 10,
+    SmoothSignedSquare = 11,
 }
 
 pub trait BaseOperations {
