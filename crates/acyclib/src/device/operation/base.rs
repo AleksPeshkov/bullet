@@ -23,6 +23,7 @@ pub enum DiffableFromOutput {
     PolyTanh = 8,
     SmoothStep = 9,
     LeakySCReLU = 10,
+    SignedSquare = 11,
 }
 
 pub trait BaseOperations {
