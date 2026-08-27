@@ -215,6 +215,10 @@ impl<B: BackendMarker> GraphBuilderNode<'_, B> {
         self.diffable_from_output(DiffableFromOutput::Welch)
     }
 
+    pub fn signed_square(self) -> Self {
+        self.diffable_from_output(DiffableFromOutput::SignedSquare)
+    }
+
     /// Clamps the values elementwise into the range [min, max],
     /// but on backpropagation it acts as if it was the identity.
     pub fn clip_pass_through_grad(self, min: f32, max: f32) -> Self {
