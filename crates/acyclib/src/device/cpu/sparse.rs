@@ -60,6 +60,7 @@ impl SparseAffineOps for CpuThread {
             DiffableFromOutput::SignedSquare => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| x * x.abs()),
             DiffableFromOutput::SignedSCReLU => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| { let c = x.clamp(-1.0, 1.0); c * c.abs() }),
             DiffableFromOutput::LeakySignedSCReLU => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| { let c = x.clamp(-1.0, 1.0); c * c.abs() }),
+            DiffableFromOutput::PTanh => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| { let c = x.clamp(0.0, 1.0); c * (2.0 - c) }),
         }
 
         Ok(())
@@ -122,6 +123,7 @@ impl SparseAffineOps for CpuThread {
             DiffableFromOutput::SignedSquare => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| 2.0 * x.abs().sqrt() ),
             DiffableFromOutput::SignedSCReLU => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| if x.abs() >= 1.0 { 0.0 } else { 2.0 * x.abs().sqrt() } ),
             DiffableFromOutput::LeakySignedSCReLU => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| if x.abs() >= 1.0 { 0.01 } else { 2.0 * x.abs().sqrt() } ),
+            DiffableFromOutput::PTanh => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| if x <= 0.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 2.0 * (1.0 - x).sqrt() }),
         }
 
         Ok(())
