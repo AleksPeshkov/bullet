@@ -26,6 +26,7 @@ pub enum DiffableFromOutput {
     SignedSquare = 11,
     SignedSCReLU = 12,
     LeakySignedSCReLU = 13,
+    PTanh = 14,
 }
 
 pub trait BaseOperations {
