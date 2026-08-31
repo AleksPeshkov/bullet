@@ -24,6 +24,7 @@ pub enum DiffableFromOutput {
     Welch = 9,
     SignedSquare = 10,
     SmoothSignedSquare = 11,
+    PTanh = 12,
 }
 
 pub trait BaseOperations {

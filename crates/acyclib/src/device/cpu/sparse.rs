@@ -58,6 +58,7 @@ impl SparseAffineOps for CpuThread {
             DiffableFromOutput::Welch => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| if x <= -1.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 1.0 - x * x }),
             DiffableFromOutput::SignedSquare => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| if x >= 0.0 { x*x } else { -x*x }),
             DiffableFromOutput::SmoothSignedSquare => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| x.clamp(-1.0, 1.0) * x.abs() + 2.0 * (x - x.clamp(-1.0, 1.0))),
+            DiffableFromOutput::PTanh => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| if x <= 0.0 { 0.0 } else if x >= 1.0 { 1.0 } else { x * (2.0 - x) }),
         }
 
         Ok(())
@@ -118,6 +119,7 @@ impl SparseAffineOps for CpuThread {
             DiffableFromOutput::Welch => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| 2.0 - 2.0 * x.max(0.0).sqrt()),
             DiffableFromOutput::SignedSquare => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| if x >= 0.0 { 2.0 * x.sqrt() } else { 2.0 * (-x).sqrt() }),
             DiffableFromOutput::SmoothSignedSquare => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| 2.0 * x.clamp(-1.0, 1.0).abs().sqrt() ),
+            DiffableFromOutput::PTanh => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| if x <= 0.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 2.0 * (1.0 - x) }),
         }
 
         Ok(())

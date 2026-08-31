@@ -42,6 +42,7 @@ impl BaseOperations for CpuBuffer<f32> {
             DiffableFromOutput::Welch => apply(size, a, self, |x| if x <= -1.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 1.0 - x * x }),
             DiffableFromOutput::SignedSquare => apply(size, a, self, |x| if x >= 0.0 { x*x } else { -x*x }),
             DiffableFromOutput::SmoothSignedSquare => apply(size, a, self, |x| x.clamp(-1.0, 1.0) * x.abs() + 2.0 * (x - x.clamp(-1.0, 1.0))),
+            DiffableFromOutput::PTanh => apply(size, a, self, |x| if x <= 0.0 { 0.0 } else if x >= 1.0 { 1.0 } else { x * (2.0 - x) }),
         }
 
         Ok(())
@@ -81,6 +82,7 @@ impl BaseOperations for CpuBuffer<f32> {
             DiffableFromOutput::Welch => apply(size, a, grd, self, |x| if x <= -1.0 { 0.0 } else if x >= 1.0 { 0.0 } else { -2.0 * x }),
             DiffableFromOutput::SignedSquare => apply(size, a, grd, self, |x| if x >= 0.0 { 2.0*x } else { -2.0*x }),
             DiffableFromOutput::SmoothSignedSquare => apply(size, a, grd, self, |x| 2.0 * x.clamp(-1.0, 1.0).abs()),
+            DiffableFromOutput::PTanh => apply(size, a, grd, self, |x| if x <= 0.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 2.0 * (1.0 - x) }),
         }
 
         Ok(())
