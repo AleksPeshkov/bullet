@@ -22,6 +22,7 @@ pub enum DiffableFromOutput {
     LeakyHardTanh = 7,
     PolyTanh = 8,
     SmoothStep = 9,
+    LeakySCReLU = 10,
 }
 
 pub trait BaseOperations {
