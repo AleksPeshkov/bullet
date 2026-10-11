@@ -42,6 +42,8 @@ impl BaseOperations for CpuBuffer<f32> {
             DiffableFromOutput::PolyTanh => apply(size, a, self, |x| { let c = x.clamp(-1.0, 1.0); c * (2.0 - c.abs()) }),
             DiffableFromOutput::SmoothStep => apply(size, a, self, |x| if x <= 0.0 { 0.0 } else if x >= 1.0 { 1.0 } else { x * x * (3.0 - 2.0 * x) }),
             DiffableFromOutput::SignedSquare => apply(size, a, self, |x| x * x.abs()),
+            DiffableFromOutput::SignedSCReLU => apply(size, a, self, |x| { let c = x.clamp(-1.0, 1.0); c * c.abs() }),
+            DiffableFromOutput::LeakySignedSCReLU => apply(size, a, self, |x| { let c = x.clamp(-1.0, 1.0); c * c.abs() }),
         }
 
         Ok(())
@@ -81,6 +83,8 @@ impl BaseOperations for CpuBuffer<f32> {
             DiffableFromOutput::PolyTanh => apply(size, a, grd, self, |x| if x.abs() >= 1.0 { 0.0 } else { 2.0 - 2.0 * x.abs() }),
             DiffableFromOutput::SmoothStep => apply(size, a, grd, self, |x| if x <= 0.0 { 0.0 } else if x >= 1.0 { 0.0 } else { 6.0 * x * (1.0 - x) }),
             DiffableFromOutput::SignedSquare => apply(size, a, grd, self, |x| 2.0 * x.abs()),
+            DiffableFromOutput::SignedSCReLU => apply(size, a, grd, self, |x| if x.abs() >= 1.0 { 0.0 } else { 2.0 * x.abs() }),
+            DiffableFromOutput::LeakySignedSCReLU => apply(size, a, grd, self, |x| if x.abs() >= 1.0 { 0.01 } else { 2.0 * x.abs() }),
         }
 
         Ok(())
