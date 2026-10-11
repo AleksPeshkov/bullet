@@ -24,6 +24,8 @@ pub enum DiffableFromOutput {
     SmoothStep = 9,
     LeakySCReLU = 10,
     SignedSquare = 11,
+    SignedSCReLU = 12,
+    LeakySignedSCReLU = 13,
 }
 
 pub trait BaseOperations {
