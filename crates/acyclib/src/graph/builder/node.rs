@@ -191,6 +191,10 @@ impl<B: BackendMarker> GraphBuilderNode<'_, B> {
         self.diffable_from_output(DiffableFromOutput::SCReLU)
     }
 
+    pub fn leaky_screlu(self) -> Self {
+        self.diffable_from_output(DiffableFromOutput::LeakySCReLU)
+    }
+
     pub fn sqrrelu(self) -> Self {
         self.diffable_from_output(DiffableFromOutput::SqrReLU)
     }
