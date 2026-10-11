@@ -223,6 +223,14 @@ impl<B: BackendMarker> GraphBuilderNode<'_, B> {
         self.diffable_from_output(DiffableFromOutput::SignedSquare)
     }
 
+    pub fn signed_screlu(self) -> Self {
+        self.diffable_from_output(DiffableFromOutput::SignedSCReLU)
+    }
+
+    pub fn leaky_signed_screlu(self) -> Self {
+        self.diffable_from_output(DiffableFromOutput::LeakySignedSCReLU)
+    }
+
     /// Clamps the values elementwise into the range [min, max],
     /// but on backpropagation it acts as if it was the identity.
     pub fn clip_pass_through_grad(self, min: f32, max: f32) -> Self {
