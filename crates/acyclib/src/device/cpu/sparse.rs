@@ -54,6 +54,7 @@ impl SparseAffineOps for CpuThread {
             DiffableFromOutput::Sigmoid => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| 1.0 / (1.0 + (-x).exp())),
             DiffableFromOutput::HardTanh => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| x.clamp(-1.0, 1.0)),
             DiffableFromOutput::LeakyHardTanh => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| x.clamp(-1.0, 1.0)),
+            DiffableFromOutput::PolyTanh => affine_fwd(nnz, m, k, a, x, v, b, bb, y, |x| { let c = x.clamp(-1.0, 1.0); c * (2.0 - c.abs()) }),
         }
 
         Ok(())
@@ -110,6 +111,7 @@ impl SparseAffineOps for CpuThread {
             DiffableFromOutput::Sigmoid => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| x * (1.0 - x)),
             DiffableFromOutput::HardTanh => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| if x.abs() >= 1.0 { 0.0 } else { 1.0 }),
             DiffableFromOutput::LeakyHardTanh => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| if x.abs() >= 1.0 { 0.01 } else { 1.0 }),
+            DiffableFromOutput::PolyTanh => affine_bwd(nnz, m, k, x, v, y, yg, bb, ag, bg, |x| if x.abs() >= 1.0 { 0.0 } else { 2.0 * (1.0 - x.abs()).sqrt() }),
         }
 
         Ok(())
