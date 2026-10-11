@@ -38,6 +38,7 @@ impl BaseOperations for CpuBuffer<f32> {
             DiffableFromOutput::Sigmoid => apply(size, a, self, |x| 1.0 / (1.0 + (-x).exp())),
             DiffableFromOutput::HardTanh => apply(size, a, self, |x| x.clamp(-1.0, 1.0)),
             DiffableFromOutput::LeakyHardTanh => apply(size, a, self, |x| x.clamp(-1.0, 1.0)),
+            DiffableFromOutput::PolyTanh => apply(size, a, self, |x| { let c = x.clamp(-1.0, 1.0); c * (2.0 - c.abs()) }),
         }
 
         Ok(())
@@ -73,6 +74,7 @@ impl BaseOperations for CpuBuffer<f32> {
             DiffableFromOutput::Sigmoid => apply(size, a, grd, self, |x| { let sig = 1.0 / (1.0 + (-x).exp()); sig * (1.0 - sig) }),
             DiffableFromOutput::HardTanh => apply(size, a, grd, self, |x| if x.abs() >= 1.0 { 0.0 } else { 1.0 } ),
             DiffableFromOutput::LeakyHardTanh => apply(size, a, grd, self, |x| if x.abs() >= 1.0 { 0.01 } else { 1.0 } ),
+            DiffableFromOutput::PolyTanh => apply(size, a, grd, self, |x| if x.abs() >= 1.0 { 0.0 } else { 2.0 - 2.0 * x.abs() }),
         }
 
         Ok(())
