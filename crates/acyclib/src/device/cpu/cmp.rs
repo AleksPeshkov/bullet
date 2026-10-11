@@ -59,6 +59,7 @@ impl CpuThread {
             (1027, DiffableFromOutput::SqrReLU),
             (1027, DiffableFromOutput::HardTanh),
             (1027, DiffableFromOutput::LeakyHardTanh),
+            (1027, DiffableFromOutput::PolyTanh),
         ] {
             print!("activation={act:?} size={size} fwd... ");
             display_passed(base_op_equal(device.clone(), size, BaseOp::DiffableFromOutput(act), true));
