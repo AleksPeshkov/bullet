@@ -30,10 +30,11 @@ use crate::{
     },
 };
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum InitSettings {
     Zeroed,
     Constant { value: f32 },
+    Vector { vector: Vec<f32> },
     Normal { mean: f32, stdev: f32 },
     Uniform { mean: f32, stdev: f32 },
 }
@@ -170,25 +171,31 @@ where
         let graph = ir.compile(device).unwrap();
 
         for (id, init_data) in self.init_data.lock().unwrap().iter() {
-            match *init_data {
+            match init_data {
                 InitSettings::Zeroed => {}
                 InitSettings::Constant { value } => graph
                     .get(GraphNodeId::new(graph.weight_idx(id).unwrap(), GraphNodeIdTy::Values))
                     .unwrap()
                     .dense_mut()
-                    .seed_constant(value)
+                    .seed_constant(*value)
+                    .unwrap(),
+                InitSettings::Vector { vector } => graph
+                    .get(GraphNodeId::new(graph.weight_idx(id).unwrap(), GraphNodeIdTy::Values))
+                    .unwrap()
+                    .dense_mut()
+                    .seed_vector(vector)
                     .unwrap(),
                 InitSettings::Normal { mean, stdev } => graph
                     .get(GraphNodeId::new(graph.weight_idx(id).unwrap(), GraphNodeIdTy::Values))
                     .unwrap()
                     .dense_mut()
-                    .seed_random(mean, stdev, true)
+                    .seed_random(*mean, *stdev, true)
                     .unwrap(),
                 InitSettings::Uniform { mean, stdev } => graph
                     .get(GraphNodeId::new(graph.weight_idx(id).unwrap(), GraphNodeIdTy::Values))
                     .unwrap()
                     .dense_mut()
-                    .seed_random(mean, stdev, false)
+                    .seed_random(*mean, *stdev, false)
                     .unwrap(),
             };
         }

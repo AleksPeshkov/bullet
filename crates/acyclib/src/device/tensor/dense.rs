@@ -41,6 +41,10 @@ impl<D: Device> DenseMatrix<D> {
         self.load_from_slice(self.batch_size(), &vec![value; self.size()])
     }
 
+    pub fn seed_vector(&mut self, vector: &Vec<f32>) -> Result<(), D::DeviceError> {
+        self.load_from_slice(self.batch_size(), &vector)
+    }
+
     pub fn seed_random(&mut self, mean: f32, stdev: f32, use_gaussian: bool) -> Result<(), D::DeviceError> {
         let values = rng::vec_f32(self.size(), mean, stdev, use_gaussian);
         self.load_from_slice(self.batch_size(), &values)
