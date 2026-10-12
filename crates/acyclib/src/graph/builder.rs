@@ -33,6 +33,7 @@ use crate::{
 #[derive(Clone, Copy, Debug)]
 pub enum InitSettings {
     Zeroed,
+    Constant { value: f32 },
     Normal { mean: f32, stdev: f32 },
     Uniform { mean: f32, stdev: f32 },
 }
@@ -171,6 +172,12 @@ where
         for (id, init_data) in self.init_data.lock().unwrap().iter() {
             match *init_data {
                 InitSettings::Zeroed => {}
+                InitSettings::Constant { value } => graph
+                    .get(GraphNodeId::new(graph.weight_idx(id).unwrap(), GraphNodeIdTy::Values))
+                    .unwrap()
+                    .dense_mut()
+                    .seed_constant(value)
+                    .unwrap(),
                 InitSettings::Normal { mean, stdev } => graph
                     .get(GraphNodeId::new(graph.weight_idx(id).unwrap(), GraphNodeIdTy::Values))
                     .unwrap()
