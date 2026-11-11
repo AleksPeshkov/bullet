@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{f32::consts::PI, fmt::Debug};
 
 use acyclib::trainer::logger::ansi;
 
@@ -70,6 +70,128 @@ impl<WDL: WdlScheduler> WdlScheduler for Warmup<WDL> {
     fn colourful(&self) -> String {
         // < BASE_SCHEDULER_TEXT >, warmup over {} batches
         format!("{}, warmup over {} batches", self.inner.colourful(), ansi(self.warmup_batches, 31))
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct LinearDecayWDL {
+    pub start: f32,
+    pub end: f32,
+    pub final_superbatch: usize,
+}
+
+impl WdlScheduler for LinearDecayWDL {
+    fn blend(&self, _batch: usize, superbatch: usize, max: usize) -> f32 {
+        if superbatch >= self.final_superbatch {
+            return self.end;
+        }
+
+        let lambda = superbatch as f32 / max as f32;
+        self.start + lambda * (self.end - self.start)
+    }
+
+    fn colourful(&self) -> String {
+        format!(
+            "start at {} and linearly decay to {} at superbatch {}",
+            ansi(self.start, 31),
+            ansi(self.end, 31),
+            ansi(self.final_superbatch, 31),
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct CosineDecayWDL {
+    pub start: f32,
+    pub end: f32,
+    pub final_superbatch: usize,
+}
+
+impl WdlScheduler for CosineDecayWDL {
+    fn blend(&self, _batch: usize, superbatch: usize, max: usize) -> f32 {
+        if superbatch >= self.final_superbatch {
+            return self.end;
+        }
+
+        let progress = superbatch as f32 / max as f32;
+        let lambda = 1.0 - 0.5 * (1.0 + (PI * progress).cos());
+        self.start + lambda * (self.end - self.start)
+    }
+
+    fn colourful(&self) -> String {
+        format!(
+            "start at {} and cosine decay to {} at superbatch {}",
+            ansi(self.start, 31),
+            ansi(self.end, 31),
+            ansi(self.final_superbatch, 31),
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct RangedLinearDecayWDL {
+    pub initial_wdl: f32,
+    pub final_wdl: f32,
+    pub start_superbatch: usize,
+    pub end_superbatch: usize,
+}
+
+impl WdlScheduler for RangedLinearDecayWDL {
+    fn blend(&self, _batch: usize, superbatch: usize, _max: usize) -> f32 {
+        if superbatch <= self.start_superbatch {
+            return self.initial_wdl;
+        }
+        if superbatch >= self.end_superbatch {
+            return self.final_wdl;
+        }
+
+        let lambda = (superbatch - self.start_superbatch) as f32
+            / (self.end_superbatch - self.start_superbatch).max(1) as f32;
+        self.initial_wdl + (self.final_wdl - self.initial_wdl) * lambda
+    }
+
+    fn colourful(&self) -> String {
+        format!(
+            "linear decay {} to {} at superbatch {} to {}",
+            ansi(self.initial_wdl, 31),
+            ansi(self.final_wdl, 31),
+            ansi(self.start_superbatch, 31),
+            ansi(self.end_superbatch, 31),
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct RangedCosineDecayWDL {
+    pub initial_wdl: f32,
+    pub final_wdl: f32,
+    pub start_superbatch: usize,
+    pub end_superbatch: usize,
+}
+
+impl WdlScheduler for RangedCosineDecayWDL {
+    fn blend(&self, _batch: usize, superbatch: usize, _max: usize) -> f32 {
+        if superbatch <= self.start_superbatch {
+            return self.initial_wdl;
+        }
+        if superbatch >= self.end_superbatch {
+            return self.final_wdl;
+        }
+
+        let progress = (superbatch - self.start_superbatch) as f32
+            / (self.end_superbatch - self.start_superbatch).max(1) as f32;
+        let lambda = 0.5 * (1.0 + (PI * progress).cos());
+        self.final_wdl + (self.initial_wdl - self.final_wdl) * lambda
+    }
+
+    fn colourful(&self) -> String {
+        format!(
+            "cosine decay {} to {} at superbatch {} to {}",
+            ansi(self.initial_wdl, 31),
+            ansi(self.final_wdl, 31),
+            ansi(self.start_superbatch, 31),
+            ansi(self.end_superbatch, 31),
+        )
     }
 }
 
