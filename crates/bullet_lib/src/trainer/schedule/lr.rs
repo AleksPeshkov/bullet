@@ -131,6 +131,73 @@ impl LrScheduler for CosineDecayLR {
 }
 
 #[derive(Clone, Debug)]
+pub struct RangedLinearDecayLR {
+    pub initial_lr: f32,
+    pub final_lr: f32,
+    pub start_superbatch: usize,
+    pub end_superbatch: usize,
+}
+
+impl LrScheduler for RangedLinearDecayLR {
+    fn lr(&self, _batch: usize, superbatch: usize) -> f32 {
+        if superbatch <= self.start_superbatch {
+            return self.initial_lr;
+        }
+        if superbatch >= self.end_superbatch {
+            return self.final_lr;
+        }
+
+        let lambda = (superbatch - self.start_superbatch) as f32
+            / (self.end_superbatch - self.start_superbatch).max(1) as f32;
+        self.initial_lr + (self.final_lr - self.initial_lr) * lambda
+    }
+
+    fn colourful(&self) -> String {
+        format!(
+            "linear decay {} to {} at superbatch {} to {}",
+            ansi(self.initial_lr, 31),
+            ansi(self.final_lr, 31),
+            ansi(self.start_superbatch, 31),
+            ansi(self.end_superbatch, 31),
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct RangedCosineDecayLR {
+    pub initial_lr: f32,
+    pub final_lr: f32,
+    pub start_superbatch: usize,
+    pub end_superbatch: usize,
+}
+
+impl LrScheduler for RangedCosineDecayLR {
+    fn lr(&self, _batch: usize, superbatch: usize) -> f32 {
+        if superbatch <= self.start_superbatch {
+            return self.initial_lr;
+        }
+        if superbatch >= self.end_superbatch {
+            return self.final_lr;
+        }
+
+        let progress = (superbatch - self.start_superbatch) as f32
+            / (self.end_superbatch - self.start_superbatch).max(1) as f32;
+        let lambda = 0.5 * (1.0 + (PI * progress).cos());
+        self.final_lr + (self.initial_lr - self.final_lr) * lambda
+    }
+
+    fn colourful(&self) -> String {
+        format!(
+            "cosine decay {} to {} at superbatch {} to {}",
+            ansi(self.initial_lr, 31),
+            ansi(self.final_lr, 31),
+            ansi(self.start_superbatch, 31),
+            ansi(self.end_superbatch, 31),
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct ExponentialDecayLR {
     pub initial_lr: f32,
     pub final_lr: f32,
